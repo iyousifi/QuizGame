@@ -1,0 +1,97 @@
+﻿@page "/Question"
+@using QuizGameBlazor.DataAccess
+@using System.Linq;
+@inject IQuestionRepository questionRepository
+@inject IJSRuntime jsRuntime
+<h3>Question</h3>
+
+
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Text</th>
+            <th>Answers</th>
+            <th>Answer</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var question in questions)
+        {
+            @if (!question.AnswerOptions.Any(x => x.IsCorrect))
+                continue;
+            <tr>
+                <td>@question.Text</td>
+                <td>
+                    @foreach (var answerOption in question.AnswerOptions)
+                    {
+                        @if (answerOption.IsCorrect)
+                        {
+                            <input type="button" class="btn btn-dark" value="@answerOption.Answer.Text" />
+                        }
+                        else
+                        {
+                            <input type="button" class="btn btn-light" value="@answerOption.Answer.Text" />
+                        }
+
+                    }
+                </td>
+                <td>@question.AnswerOptions.First(a => a.IsCorrect).Answer.Text</td>
+                <td><input type="button" class="btn btn-primary" @onclick="(() => PrepareForEdit(question))" data-toggle="modal" data-target="#questionModal" value="Edit" /></td>
+                <td><input type="button" class="btn btn-danger" @onclick="(() => PrepareForDelete(question))" data-toggle="modal" data-target="#confirmDeleteModal" value="Delete" /></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div>
+    <input type="button" data-toggle="modal" data-target="#questionModal" class="btn btn-primary" value="Add Question" @onclick="(() => InitializeQuestionObject())" />
+</div>
+<ConfirmDialog OnClick="@Delete" />
+<QuestionDetail QuestionObject=questionObject DataChanged="@DataChanged">
+    <CustomHeader>@customHeader</CustomHeader>
+</QuestionDetail>
+
+@code{
+    List<Models.Question> questions = new List<Models.Question>();
+    Models.Question questionObject = new Models.Question();
+    string customHeader = string.Empty;
+
+    private void InitializeQuestionObject()
+    {
+        questionObject = new Models.Question();
+        customHeader = "Add New Question";
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        questions = await questionRepository.GetQuestions();
+    }
+
+    private async void DataChanged()
+    {
+        questions = await questionRepository.GetQuestions();
+        StateHasChanged();
+    }
+    private void PrepareForEdit(QuizGameBlazor.Models.Question question)
+    {
+        questionObject = question;
+        customHeader = "Edit Question";
+    }
+    private void PrepareForDelete(QuizGameBlazor.Models.Question question)
+    {
+        questionObject = question;
+
+    }
+    private async Task Delete()
+    {
+        await questionRepository.Delete(questionObject.Id);
+        await jsRuntime.InvokeAsync<object>("CloseModal", "confirmDeleteModal");
+        questions = await questionRepository.GetQuestions();
+        questionObject = new Models.Question();
+    }
+
+}
+

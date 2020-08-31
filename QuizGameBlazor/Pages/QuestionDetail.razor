@@ -1,0 +1,159 @@
+﻿@using QuizGameBlazor.DataAccess
+@using QuizGameBlazor.Models
+@using Blazorise
+@using FluentValidation;
+@inject IQuestionRepository questionRepository
+@inject IAnswerRepository answerRepository
+@inject IJSRuntime jsRuntime
+
+<div class="modal" tabindex="-1" role="dialog" id="questionModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@CustomHeader</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@QuestionObject" OnValidSubmit="@HandleValidSubmit">
+                    <div class="form-group">
+                        <label for="text">Text</label>
+                        <input type="hidden" @bind-value="@QuestionObject.Id" />
+                        <InputText id="name" class="form-control" @bind-Value="@QuestionObject.Text" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="difficultyLevel">Difficulty (1 easiest-10 hardest)</label>
+                        <InputNumber id="Summary" class="form-control"
+                                     @bind-Value="QuestionObject.DifficultyLevel" />
+
+                    </div>
+                    <div class="form-group">
+                        <RadioGroup TValue="int" Name="answerOptions" Buttons="true" CheckedValue="@CorrectAnswerId" CheckedValueChanged="@SetCorrectAnswer">
+                            @foreach (var item in QuestionObject.AnswerOptions)
+                            {
+                                <Radio TValue="int" Value="@item.Answer.Id" Checked="@item.IsCorrect">@item.Answer.Text</Radio>
+                            }
+                        </RadioGroup>
+                    </div>
+                    <div class="form-group">
+                        <label for="AddAnswerOption">Add answer option</label>
+                        <input class="form-control" @bind="@NewAnswerOption" @bind:event="oninput" @onkeypress="AddAnswer" />
+                    </div>
+                    <div class="form-group">
+                        <label for="SearchAnswerOption">Search answer options</label>
+                        <BlazoredTypeahead SearchMethod="SearchAnswer"
+                                           @bind-Value="SelectedAnswer">
+                            <SelectedTemplate Context="answer">
+                                @answer.Text
+                            </SelectedTemplate>
+                            <ResultTemplate Context="answer">
+                                @answer.Text
+                            </ResultTemplate>
+                        </BlazoredTypeahead>
+
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<AnswerDetail AnswerObject="@answerObject" DataChanged="@DataChanged">
+
+    </AnswerDetail>*@
+
+
+@code {
+    [Parameter]
+    public QuizGameBlazor.Models.Question QuestionObject { get; set; }
+
+    [Parameter]
+    public Action DataChanged { get; set; }
+
+    [Parameter]
+    public RenderFragment CustomHeader { get; set; }
+
+    List<string> TaskStatusList = new List<string>() { "New", "In Progress", "Completed" };
+    private string NewAnswerOption { get; set; }
+    private Answer answerObject;
+
+    private List<Models.Answer> Answers;
+    private QuizGameBlazor.Models.Answer _selectedAnswer;
+    public QuizGameBlazor.Models.Answer SelectedAnswer
+    {
+        get { return _selectedAnswer; }
+        set
+        {
+            QuestionObject.AnswerOptions.Add(new Models.AnswerOption { Answer = value, AnswerId = value.Id, IsCorrect = false });
+            _selectedAnswer = value;
+        }
+    }
+    private int CorrectAnswerId;
+
+
+    private async Task CloseTaskModal()
+    {
+        await jsRuntime.InvokeAsync<object>("CloseModal", "questionModal");
+    }
+
+    private async Task<IEnumerable<Models.Answer>> SearchAnswer(string searchText)
+    {
+        return (await questionRepository.GetAnswers()).Where(x => x.Text != null && x.Text.ToLower().Contains(searchText.ToLower()));
+    }
+
+    private async Task AddAnswer(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter")
+        {
+
+            var regex = new System.Text.RegularExpressions.Regex("\\B\\#\\w+");
+            var tags = regex.Matches(NewAnswerOption);
+            var answerText = NewAnswerOption.Substring(0, NewAnswerOption.IndexOf('#'));
+            var answerTags = new List<AnswerTags>();
+            tags.ToList().ForEach(t =>
+            {
+                answerTags.Add(new AnswerTags { Tag = new Tag { Text = t.Value.Substring(1) } });
+            });
+            var newAnswer = await answerRepository.AddAsync(new Models.Answer() { Text = answerText, Tags = answerTags });
+            QuestionObject.AnswerOptions.Add(new Models.AnswerOption { Answer = newAnswer, AnswerId = newAnswer.Id, IsCorrect = false });
+            NewAnswerOption = string.Empty;
+
+        }
+    }
+    public void InitializeAnswerObject()
+    {
+        answerObject = new Answer();
+    }
+
+    private void SetCorrectAnswer(int value)
+    {
+        QuestionObject.AnswerOptions.ForEach(x => x.IsCorrect = false);
+        QuestionObject.AnswerOptions.First(x => x.AnswerId == value).IsCorrect = true;
+        CorrectAnswerId = value;
+    }
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (QuestionObject.AnswerOptions.Any())
+            CorrectAnswerId = QuestionObject.AnswerOptions.FirstOrDefault(x => x.IsCorrect).AnswerId;
+    }
+
+    private async void HandleValidSubmit()
+    {
+        if (QuestionObject.Id == 0)
+        {
+            await questionRepository.Add(QuestionObject);
+        }
+        else
+        {
+            await questionRepository.Update(QuestionObject);
+        }
+        await CloseTaskModal();
+        DataChanged?.Invoke();
+    }
+}

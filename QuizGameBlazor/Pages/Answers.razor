@@ -1,0 +1,72 @@
+﻿@page "/Answer"
+<h3>Answers</h3>
+@using QuizGameBlazor.Models
+@inject QuizGameBlazor.DataAccess.IAnswerRepository answerRepository
+@inject IJSRuntime jsRuntime
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Text</th>
+            <th>Tags</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var answer in answers)
+        {
+            <tr>
+                <td>@answer.Text</td>
+                <td>
+                    @if (answer.Tags.Any())
+                    {
+                        foreach (var tag in answer.Tags)
+                        {
+                            <label class="btn btn-dark">@tag.Tag.Text</label>
+                        }
+                    }
+                </td>
+                <td><input type="button" class="btn btn-primary" @onclick="(() => PrepareForEdit(answer))" data-toggle="modal" data-target="#answerModal" value="Edit" /></td>
+            </tr>
+        }
+
+    </tbody>
+</table>
+<div>
+    <input type="button" data-toggle="modal" data-target="#answerModal" class="btn btn-primary" value="Add Answer" @onclick="(() => InitializeAnswerObject())" />
+</div>
+<AnswerDetail AnswerObject="@answerObject" DataChanged="@DataChanged">
+
+
+</AnswerDetail>
+
+@code {
+    List<Answer> answers = new List<Answer>();
+    Answer answerObject;
+    string customHeader = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        answerObject = new Answer();
+        answers = await answerRepository.GetAnswersAsync();
+    }
+    private void InitializeAnswerObject()
+    {
+        answerObject = new Answer();
+        customHeader = "Add Answer";
+    }
+
+    private void PrepareForEdit(Answer answer)
+    {
+        customHeader = "Edit Answer";
+        answerObject = answer;
+    }
+
+    private async void DataChanged()
+    {
+        answers = await answerRepository.GetAnswersAsync();
+        StateHasChanged();
+    }
+
+}
