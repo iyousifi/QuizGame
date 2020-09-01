@@ -4,6 +4,7 @@
 @using FluentValidation;
 @inject IQuestionRepository questionRepository
 @inject IAnswerRepository answerRepository
+@inject ITagsRepository tagsRepository
 @inject IJSRuntime jsRuntime
 
 <div class="modal" tabindex="-1" role="dialog" id="questionModal">
@@ -42,6 +43,13 @@
                         <input class="form-control" @bind="@NewAnswerOption" @bind:event="oninput" @onkeypress="AddAnswer" />
                     </div>
                     <div class="form-group">
+                        @foreach (var tag in Tags)
+                        {
+
+                            <button type="button" class="btn btn-info @(SelectedTags.Contains(tag.Id) ? "btn-danger" : "")" @onclick="(()=> ToggleTag(tag.Id))">@tag.Text</button>
+                        }
+                    </div>
+                    <div class="form-group">
                         <label for="SearchAnswerOption">Search answer options</label>
                         <BlazoredTypeahead SearchMethod="SearchAnswer"
                                            @bind-Value="SelectedAnswer">
@@ -77,9 +85,10 @@
     [Parameter]
     public RenderFragment CustomHeader { get; set; }
 
-    List<string> TaskStatusList = new List<string>() { "New", "In Progress", "Completed" };
+    private List<Tag> Tags;
     private string NewAnswerOption { get; set; }
     private Answer answerObject;
+    private List<int> SelectedTags;
 
     private List<Models.Answer> Answers;
     private QuizGameBlazor.Models.Answer _selectedAnswer;
@@ -93,7 +102,22 @@
         }
     }
     private int CorrectAnswerId;
+    protected override async Task OnInitializedAsync()
+    {
+        Tags = new List<Tag>();
+        Tags = await tagsRepository.GetTagsAsync();
+        SelectedTags = new List<int>();
+    }
 
+
+    private async Task ToggleTag(int id)
+    {
+        if (SelectedTags.Any(t => t == id))
+            SelectedTags.Remove(id);
+        else
+            SelectedTags.Add(id);
+
+    }
 
     private async Task CloseTaskModal()
     {
@@ -102,6 +126,8 @@
 
     private async Task<IEnumerable<Models.Answer>> SearchAnswer(string searchText)
     {
+        if (SelectedTags.Any())
+            return (await questionRepository.GetAnswers()).Where(x => x.Text != null && x.Text.ToLower().Contains(searchText.ToLower()) && x.Tags.Any(t => SelectedTags.Contains(t.TagId)));
         return (await questionRepository.GetAnswers()).Where(x => x.Text != null && x.Text.ToLower().Contains(searchText.ToLower()));
     }
 
@@ -114,9 +140,14 @@
             var tags = regex.Matches(NewAnswerOption);
             var answerText = NewAnswerOption.Substring(0, NewAnswerOption.IndexOf('#'));
             var answerTags = new List<AnswerTags>();
+            var existingTags = await tagsRepository.GetTagsAsync();
             tags.ToList().ForEach(t =>
             {
-                answerTags.Add(new AnswerTags { Tag = new Tag { Text = t.Value.Substring(1) } });
+                var currentTag = existingTags.FirstOrDefault(tag => tag.Text.ToLower().Equals(t.Value.Substring(1)));
+                if (currentTag != null)
+                    answerTags.Add(new AnswerTags { Tag = new Tag { Text = t.Value.Substring(1), Id = currentTag.Id } });
+                else
+                    answerTags.Add(new AnswerTags { Tag = new Tag { Text = t.Value.Substring(1) } });
             });
             var newAnswer = await answerRepository.AddAsync(new Models.Answer() { Text = answerText, Tags = answerTags });
             QuestionObject.AnswerOptions.Add(new Models.AnswerOption { Answer = newAnswer, AnswerId = newAnswer.Id, IsCorrect = false });
