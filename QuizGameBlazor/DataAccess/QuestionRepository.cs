@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BlazorServerDbContextExample.Data;
+using Microsoft.EntityFrameworkCore;
 using QuizGameBlazor.Models;
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,9 @@ namespace QuizGameBlazor.DataAccess
     {
         private readonly QuizGameContext _quizGameContext;
 
-        public QuestionRepository(QuizGameContext quizGameContext)
+        public QuestionRepository(IDbContextFactory<QuizGameContext> contextFactory)
         {
-            _quizGameContext = quizGameContext;
+            _quizGameContext = contextFactory.CreateDbContext();
         }
 
         public async Task Add(Question question)
@@ -36,7 +37,7 @@ namespace QuizGameBlazor.DataAccess
 
         public async Task<List<Answer>> GetAnswers()
         {
-            return await _quizGameContext.Answers.ToListAsync();
+            return await _quizGameContext.Answers.Include(a => a.Tags).ToListAsync();
         }
 
         public async Task<List<Question>> GetQuestions()
@@ -52,5 +53,6 @@ namespace QuizGameBlazor.DataAccess
             await _quizGameContext.SaveChangesAsync();
             return question;
         }
+        
     }
 }

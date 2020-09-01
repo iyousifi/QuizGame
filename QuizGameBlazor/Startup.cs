@@ -30,7 +30,7 @@ namespace QuizGameBlazor
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<QuizGameContext>(options => options.UseSqlServer(Configuration["QuizGameBlazor:ConnectionString"]));
+            //services.AddDbContext<QuizGameContext>(options => options.UseSqlServer(Configuration["QuizGameBlazor:ConnectionString"]));
             services.AddBlazorise(options =>
             {
                 options.ChangeTextOnKeyPress = true; // optional
@@ -41,6 +41,8 @@ namespace QuizGameBlazor
             services.AddServerSideBlazor();
             services.AddTransient<IQuestionRepository, QuestionRepository>();
             services.AddTransient<IAnswerRepository, AnswerRepository>();
+            services.AddTransient<ITagsRepository, TagRepository>();
+            services.AddDbContextFactory<QuizGameContext>(x => x.UseSqlServer(Configuration["QuizGameBlazor:ConnectionString"]));
             //services.BuildServiceProvider().GetService<QuizGameContext>().Database.Migrate();
         }
 
