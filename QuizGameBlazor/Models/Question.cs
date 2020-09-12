@@ -18,6 +18,8 @@ namespace QuizGameBlazor.Models
         [Required]
         [MinLength(2), MaxLength(5)]
         public List<AnswerOption> AnswerOptions { get; set; }
+
+        public List<QuestionTags> QuestionTags { get; set; }
         public int DifficultyLevel { get; set; }
     }
 }

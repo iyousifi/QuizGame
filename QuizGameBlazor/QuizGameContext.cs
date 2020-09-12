@@ -19,8 +19,40 @@ namespace QuizGameBlazor
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<AnswerOption>().HasKey(ao => new { ao.AnswerId, ao.QuestionId });
-            modelBuilder.Entity<AnswerTags>().HasKey(at => new { at.AnswerId, at.TagId });
+            modelBuilder.Entity<AnswerOption>().HasKey(ao => new {ao.AnswerId, ao.QuestionId});
+            modelBuilder.Entity<AnswerOption>()
+                .HasOne<Question>(q => q.Question)
+                .WithMany(ao => ao.AnswerOptions)
+                .HasForeignKey(a => a.AnswerId);
+            
+            modelBuilder.Entity<AnswerOption>()
+                .HasOne<Answer>(a => a.Answer)
+                .WithMany(ao => ao.AnswerOptions)
+                .HasForeignKey(q => q.QuestionId);
+
+            modelBuilder.Entity<AnswerTags>().HasKey(at => new {at.AnswerId, at.TagId});
+            modelBuilder.Entity<AnswerTags>()
+                .HasOne<Answer>(a => a.Answer)
+                .WithMany(at => at.Tags)
+                .HasForeignKey(t => t.TagId);
+
+            modelBuilder.Entity<AnswerTags>()
+                .HasOne<Tag>(t => t.Tag)
+                .WithMany(at => at.AnswerTags)
+                .HasForeignKey(at => at.AnswerId);
+
+            modelBuilder.Entity<QuestionTags>().HasKey(qt => new {qt.QuestionId, qt.TagId});
+            modelBuilder.Entity<QuestionTags>()
+                .HasOne<Question>(a => a.Question)
+                .WithMany(at => at.QuestionTags)
+                .HasForeignKey(t => t.TagId);
+
+            modelBuilder.Entity<QuestionTags>()
+                .HasOne<Tag>(t => t.Tag)
+                .WithMany(at => at.QuestionTags)
+                .HasForeignKey(at => at.QuestionId);
+
+
 
 
         }

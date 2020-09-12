@@ -138,21 +138,35 @@
 
             var regex = new System.Text.RegularExpressions.Regex("\\B\\#\\w+");
             var tags = regex.Matches(NewAnswerOption);
-            var answerText = NewAnswerOption.Substring(0, NewAnswerOption.IndexOf('#'));
-            var answerTags = new List<AnswerTags>();
-            var existingTags = await tagsRepository.GetTagsAsync();
-            tags.ToList().ForEach(t =>
+            var tagStartPosition = NewAnswerOption.IndexOf('#');
+            var answerText = tagStartPosition == -1 ? NewAnswerOption : NewAnswerOption.Substring(0, tagStartPosition);
+            var existingAnswer = await answerRepository.FindAnswer(answerText.Trim());
+            if (existingAnswer != null)
             {
-                var currentTag = existingTags.FirstOrDefault(tag => tag.Text.ToLower().Equals(t.Value.Substring(1)));
-                if (currentTag != null)
-                    answerTags.Add(new AnswerTags { Tag = new Tag { Text = t.Value.Substring(1), Id = currentTag.Id } });
-                else
-                    answerTags.Add(new AnswerTags { Tag = new Tag { Text = t.Value.Substring(1) } });
-            });
-            var newAnswer = await answerRepository.AddAsync(new Models.Answer() { Text = answerText, Tags = answerTags });
-            QuestionObject.AnswerOptions.Add(new Models.AnswerOption { Answer = newAnswer, AnswerId = newAnswer.Id, IsCorrect = false });
-            NewAnswerOption = string.Empty;
+                QuestionObject.AnswerOptions.Add(new AnswerOption { Answer = existingAnswer, AnswerId = existingAnswer.Id, IsCorrect = false });
+            }
+            else
+            {
 
+
+                var answerTags = new List<AnswerTags>();
+                var existingTags = await tagsRepository.GetTagsAsync();
+                if (tags.Any())
+                {
+                    tags.ToList().ForEach(async t =>
+                    {
+                        var currentTag = existingTags.FirstOrDefault(tag => tag.Text.ToLower().Equals(t.Value.Substring(1)));
+                        if (currentTag == null)
+                            currentTag = await tagsRepository.AddTagAsync(new Tag { Text = t.Value.Substring(1) });
+                        
+                        answerTags.Add(new AnswerTags { Tag = currentTag });
+                    });
+                }
+                var newAnswer = await answerRepository.AddAsync(new Answer() { Text = answerText, Tags = answerTags });
+                newAnswer.Tags = new List<AnswerTags>();
+                QuestionObject.AnswerOptions.Add(new AnswerOption { Answer = newAnswer, AnswerId = newAnswer.Id, IsCorrect = false });
+            }
+            NewAnswerOption = string.Empty;
         }
     }
     public void InitializeAnswerObject()

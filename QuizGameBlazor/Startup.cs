@@ -14,6 +14,7 @@ using QuizGameBlazor.DataAccess;
 using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
+using Newtonsoft.Json.Serialization;
 
 namespace QuizGameBlazor
 {
@@ -37,13 +38,18 @@ namespace QuizGameBlazor
                 .AddBootstrapProviders()
                 .AddFontAwesomeIcons();
             services.AddMvcCore(options => options.EnableEndpointRouting = false)
-                .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_3_0);
+                .SetCompatibilityVersion(Microsoft.AspNetCore.Mvc.CompatibilityVersion.Version_3_0)
+                .AddNewtonsoftJson(x => x.SerializerSettings.ContractResolver = new DefaultContractResolver());
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddTransient<IQuestionRepository, QuestionRepository>();
             services.AddTransient<IAnswerRepository, AnswerRepository>();
             services.AddTransient<ITagsRepository, TagRepository>();
-            services.AddDbContextFactory<QuizGameContext>(x => x.UseSqlServer(Configuration["QuizGameBlazor:ConnectionString"]));
+            services.AddDbContextFactory<QuizGameContext>(x =>
+                x.UseSqlServer(Configuration["QuizGameBlazor:ConnectionString"]));
+            services.AddDbContext<QuizGameContext>(x =>
+                x.UseSqlServer(Configuration["QuizGameBlazor:ConnectionString"]), ServiceLifetime.Transient);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

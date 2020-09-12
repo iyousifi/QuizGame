@@ -5,6 +5,7 @@
     <UserSecretsId>11a96741-90f1-408e-923f-c71954ac0ce4</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="DataAccess\QuizGameContextFactory.cs" />
     <Compile Remove="Migrations\20200823102748_QuizGame.cs" />
     <Compile Remove="Migrations\20200823102748_QuizGame.Designer.cs" />
   </ItemGroup>

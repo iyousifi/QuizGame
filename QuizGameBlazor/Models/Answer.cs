@@ -14,5 +14,6 @@ namespace QuizGameBlazor.Models
         public int Id { get; set; }
         public string Text { get; set; }
         public List<AnswerTags> Tags { get; set; }
+        public List<AnswerOption> AnswerOptions { get; set; }
     }
 }
