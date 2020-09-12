@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using BlazorServerDbContextExample.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,7 +22,7 @@ namespace QuizGameBlazor.DataAccess
         public static IServiceCollection AddDbContextFactory<TContext>(
             this IServiceCollection collection,
             Action<DbContextOptionsBuilder> optionsAction = null,
-            ServiceLifetime contextAndOptionsLifetime = ServiceLifetime.Singleton)
+            ServiceLifetime contextAndOptionsLifetime = ServiceLifetime.Scoped)
             where TContext : DbContext
         {
             // instantiate with the correctly scoped provider

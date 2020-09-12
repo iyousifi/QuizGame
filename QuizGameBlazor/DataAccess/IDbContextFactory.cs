@@ -1,7 +1,7 @@
 ﻿//The factory
 using Microsoft.EntityFrameworkCore;
 
-namespace BlazorServerDbContextExample.Data
+namespace QuizGameBlazor.DataAccess
 {
     /// <summary>
     /// Factory to create new instances of <see cref="DbContext"/>.

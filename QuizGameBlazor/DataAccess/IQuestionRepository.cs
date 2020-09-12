@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace QuizGameBlazor.DataAccess
 {
-    interface IQuestionRepository
+    public interface IQuestionRepository
     {
         Task<Question> Get(int Id);
         Task<List<Answer>> GetAnswers();

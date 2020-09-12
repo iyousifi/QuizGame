@@ -1,56 +1,68 @@
-﻿using BlazorServerDbContextExample.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using QuizGameBlazor.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SQLitePCL;
 
 namespace QuizGameBlazor.DataAccess
 {
     public class QuestionRepository : IQuestionRepository
     {
-        private readonly QuizGameContext _quizGameContext;
+        private readonly IDbContextFactory<QuizGameContext> _factory;
 
-        public QuestionRepository(IDbContextFactory<QuizGameContext> contextFactory)
+        public QuestionRepository(IDbContextFactory<QuizGameContext> factory)
         {
-            _quizGameContext = contextFactory.CreateDbContext();
+            _factory = factory;
         }
 
         public async Task Add(Question question)
         {
-            _quizGameContext.Questions.Add(question);
-            await _quizGameContext.SaveChangesAsync();
+            await using var context = _factory.CreateDbContext();
+
+            context.Answers.AttachRange(question.AnswerOptions.Select(x => x.Answer));
+            context.AnswerOptions.AttachRange(question.AnswerOptions);
+            //foreach (var ao in question.AnswerOptions)
+            //{
+            //    context.Entry(ao.Answer.Tags).State = EntityState.Detached;
+            //}
+            await context.Questions.AddAsync(question);
+            await context.SaveChangesAsync();
         }
 
         public async Task Delete(int id)
         {
-            var question = await _quizGameContext.Questions.FindAsync(id);
-            _quizGameContext.Questions.Remove(question);
-            await _quizGameContext.SaveChangesAsync();
+            await using var context = _factory.CreateDbContext();
+            var question = await context.Questions.FindAsync(id);
+            context.Questions.Remove(question);
+            await context.SaveChangesAsync();
         }
 
         public async Task<Question> Get(int id)
         {
-            return await _quizGameContext.Questions.FindAsync(id);
+            await using var context = _factory.CreateDbContext();
+            return await context.Questions.FindAsync(id);
         }
 
         public async Task<List<Answer>> GetAnswers()
         {
-            return await _quizGameContext.Answers.Include(a => a.Tags).ToListAsync();
+            await using var context = _factory.CreateDbContext();
+            return await context.Answers.Include(a => a.Tags).ToListAsync();
         }
 
         public async Task<List<Question>> GetQuestions()
         {
-            return await _quizGameContext.Questions.Include(a => a.AnswerOptions)
+            await using var context = _factory.CreateDbContext();
+            return await context.Questions.Include(a => a.AnswerOptions)
                 .ThenInclude(a => a.Answer)
                 .ToListAsync<Question>();
         }
 
         public async Task<Question> Update(Question question)
         {
-            _quizGameContext.Entry(question).State = EntityState.Modified;
-            await _quizGameContext.SaveChangesAsync();
+            await using var context = _factory.CreateDbContext();
+            context.Entry(question).State = EntityState.Modified;
+            await context.SaveChangesAsync();
             return question;
         }
         

@@ -12,6 +12,8 @@ namespace QuizGameBlazor.DataAccess
         Task<Answer> AddAsync(Answer answer);
         Task<Answer> UpdateAsync(Answer answer);
         Task DeleteAsync(int id);
+        Task<Answer> FindAnswer(string text);
+        Task<Answer> GetAnswersByIdAsync(int id);
 
 
     }

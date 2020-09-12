@@ -1,6 +1,5 @@
 ﻿//The factory
 using System;
-using BlazorServerDbContextExample.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

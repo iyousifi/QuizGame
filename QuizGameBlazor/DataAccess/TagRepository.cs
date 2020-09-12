@@ -1,24 +1,33 @@
-﻿using BlazorServerDbContextExample.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using QuizGameBlazor.Models;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace QuizGameBlazor.DataAccess
 {
     public class TagRepository : ITagsRepository
     {
-        private readonly QuizGameContext _context;
+        private readonly IDbContextFactory<QuizGameContext> _factory;
 
-        public TagRepository(IDbContextFactory<QuizGameContext> contextFactory)
+        public TagRepository(IDbContextFactory<QuizGameContext> factory)
         {
-            _context = contextFactory.CreateDbContext();
+            _factory = factory;
         }
         public async Task<List<Tag>> GetTagsAsync()
         {
-            return await _context.Tags.ToListAsync();
+            await using var context = _factory.CreateDbContext();
+            var result = await context.Tags
+                .ToListAsync();
+
+            return result;
+        }
+
+        public async Task<Tag> AddTagAsync(Tag tag)
+        {
+            await using var context = _factory.CreateDbContext();
+            await context.Tags.AddAsync(tag);
+            await context.SaveChangesAsync();
+            return tag;
         }
     }
 }
