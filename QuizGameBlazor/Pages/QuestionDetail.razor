@@ -31,7 +31,11 @@
 
                     </div>
                     <div class="form-group">
-                        <RadioGroup TValue="int" Name="answerOptions" Buttons="true" CheckedValue="@CorrectAnswerId" CheckedValueChanged="@SetCorrectAnswer">
+                        <label for="categories">Categories</label>
+                        <input type="text" value="@categoryString" class="form-control" data-role="tagsinput" />
+                    </div>
+                    <div class="form-group">
+                        <RadioGroup TValue="int" Name="answerOptions" Buttons="true" CheckedValue="@_correctAnswerId" CheckedValueChanged="@SetCorrectAnswer">
                             @foreach (var item in QuestionObject.AnswerOptions)
                             {
                                 <Radio TValue="int" Value="@item.Answer.Id" Checked="@item.IsCorrect">@item.Answer.Text</Radio>
@@ -87,26 +91,30 @@
 
     private List<Tag> Tags;
     private string NewAnswerOption { get; set; }
+    private string categoryString;
     private Answer answerObject;
     private List<int> SelectedTags;
-
+    private List<string> CategoryTags;
+    private HashSet<string> _initialCategories;
+    private List<Answer> AnswerCache;
     private List<Models.Answer> Answers;
-    private QuizGameBlazor.Models.Answer _selectedAnswer;
-    public QuizGameBlazor.Models.Answer SelectedAnswer
+    private Answer _selectedAnswer;
+    public Answer SelectedAnswer
     {
-        get { return _selectedAnswer; }
+        get => _selectedAnswer;
         set
         {
             QuestionObject.AnswerOptions.Add(new Models.AnswerOption { Answer = value, AnswerId = value.Id, IsCorrect = false });
             _selectedAnswer = value;
         }
     }
-    private int CorrectAnswerId;
+    private int _correctAnswerId;
     protected override async Task OnInitializedAsync()
     {
         Tags = new List<Tag>();
         Tags = await tagsRepository.GetTagsAsync();
         SelectedTags = new List<int>();
+        CategoryTags = new List<string>();
     }
 
 
@@ -126,9 +134,10 @@
 
     private async Task<IEnumerable<Models.Answer>> SearchAnswer(string searchText)
     {
+        AnswerCache ??= await questionRepository.GetAnswers();
         if (SelectedTags.Any())
-            return (await questionRepository.GetAnswers()).Where(x => x.Text != null && x.Text.ToLower().Contains(searchText.ToLower()) && x.Tags.Any(t => SelectedTags.Contains(t.TagId)));
-        return (await questionRepository.GetAnswers()).Where(x => x.Text != null && x.Text.ToLower().Contains(searchText.ToLower()));
+            return AnswerCache.Where(x => x.Text != null && x.Text.ToLower().Contains(searchText.ToLower()) && x.Tags.Any(t => SelectedTags.Contains(t.TagId)));
+        return AnswerCache.Where(x => x.Text != null && x.Text.ToLower().Contains(searchText.ToLower()));
     }
 
     private async Task AddAnswer(KeyboardEventArgs e)
@@ -158,7 +167,7 @@
                         var currentTag = existingTags.FirstOrDefault(tag => tag.Text.ToLower().Equals(t.Value.Substring(1)));
                         if (currentTag == null)
                             currentTag = await tagsRepository.AddTagAsync(new Tag { Text = t.Value.Substring(1) });
-                        
+
                         answerTags.Add(new AnswerTags { Tag = currentTag });
                     });
                 }
@@ -178,18 +187,45 @@
     {
         QuestionObject.AnswerOptions.ForEach(x => x.IsCorrect = false);
         QuestionObject.AnswerOptions.First(x => x.AnswerId == value).IsCorrect = true;
-        CorrectAnswerId = value;
+        _correctAnswerId = value;
     }
 
 
     protected override async Task OnParametersSetAsync()
     {
         if (QuestionObject.AnswerOptions.Any())
-            CorrectAnswerId = QuestionObject.AnswerOptions.FirstOrDefault(x => x.IsCorrect).AnswerId;
+            _correctAnswerId = QuestionObject.AnswerOptions.FirstOrDefault(x => x.IsCorrect).Answer.Id;
+
+        _initialCategories = new HashSet<string>();
+        if (QuestionObject.QuestionTags.Any())
+        {
+            _initialCategories = new HashSet<string>(QuestionObject.QuestionTags.Select(x => x.Tag.Text));
+            categoryString = string.Join(",", QuestionObject.QuestionTags.Select(x => x.Tag.Text));
+        }
+        else
+        {
+            categoryString = string.Empty;
+        }
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await jsRuntime.InvokeAsync<object>("InitTagsInput");
+    }
+
 
     private async void HandleValidSubmit()
     {
+        CategoryTags = await jsRuntime.InvokeAsync<List<string>>("GetCategoryValue");
+        if (CategoryTags.Any() && !_initialCategories.SequenceEqual(CategoryTags))
+        {
+            foreach (var ct in CategoryTags)
+            {
+                var tag = await tagsRepository.AddTagAsync(new Tag() { Text = ct });
+                QuestionObject.QuestionTags.Add(new QuestionTags { Tag = tag, TagId = tag.Id });
+            }
+        }
+
         if (QuestionObject.Id == 0)
         {
             await questionRepository.Add(QuestionObject);

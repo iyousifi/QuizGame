@@ -11,6 +11,7 @@ namespace QuizGameBlazor.Models
         public Question()
         {
             AnswerOptions = new List<AnswerOption>();
+            QuestionTags = new List<QuestionTags>();
         }
         public int Id { get; set; }
         [Required, StringLength(120)]

@@ -15,6 +15,7 @@ namespace QuizGameBlazor
 
         public DbSet<Tag> Tags { get; set; }
         public DbSet<AnswerTags> AnswerTags { get; set; }
+        public DbSet<QuestionTags> QuestionTags { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -23,12 +24,12 @@ namespace QuizGameBlazor
             modelBuilder.Entity<AnswerOption>()
                 .HasOne<Question>(q => q.Question)
                 .WithMany(ao => ao.AnswerOptions)
-                .HasForeignKey(a => a.AnswerId);
+                .HasForeignKey(a => a.QuestionId);
             
             modelBuilder.Entity<AnswerOption>()
                 .HasOne<Answer>(a => a.Answer)
                 .WithMany(ao => ao.AnswerOptions)
-                .HasForeignKey(q => q.QuestionId);
+                .HasForeignKey(q => q.AnswerId);
 
             modelBuilder.Entity<AnswerTags>().HasKey(at => new {at.AnswerId, at.TagId});
             modelBuilder.Entity<AnswerTags>()
@@ -45,12 +46,12 @@ namespace QuizGameBlazor
             modelBuilder.Entity<QuestionTags>()
                 .HasOne<Question>(a => a.Question)
                 .WithMany(at => at.QuestionTags)
-                .HasForeignKey(t => t.TagId);
+                .HasForeignKey(t => t.QuestionId);
 
             modelBuilder.Entity<QuestionTags>()
                 .HasOne<Tag>(t => t.Tag)
                 .WithMany(at => at.QuestionTags)
-                .HasForeignKey(at => at.QuestionId);
+                .HasForeignKey(at => at.TagId);
 
 
 

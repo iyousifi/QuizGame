@@ -18,6 +18,7 @@
     <link href="_content/Blazored.Typeahead/blazored-typeahead.css" rel="stylesheet" />
     <link href="_content/Blazorise/blazorise.css" rel="stylesheet" />
     <link href="_content/Blazorise.Bootstrap/blazorise.bootstrap.css" rel="stylesheet" />
+    <link rel="stylesheet" href="lib/tagsinput/tagsinput.css"/>
 
 </head>
 <body>
@@ -42,7 +43,7 @@
     <script src="_content/Blazored.Typeahead/blazored-typeahead.js"></script>
     <script src="_content/Blazorise/blazorise.js"></script>
     <script src="_content/Blazorise.Bootstrap/blazorise.bootstrap.js"></script>
-    <script src="~/lib/bootstrap-tagsinput/bootstrap-tagsinput.js"></script>
+    <script src="~/lib/tagsinput/tagsinput.js"></script>
     <script>
         function ShowModal(modalId) {
             $('#' + modalId).modal('show');
@@ -50,6 +51,12 @@
         function CloseModal(modalId) {
             $('#' + modalId).modal('hide');
         }
+        function InitTagsInput() {
+            $('input[data-role=tagsinput]').tagsinput();
+        };
+        function GetCategoryValue() {
+            return $('input[data-role=tagsinput]').tagsinput('items');
+        };
         $(document).keypress(
             function (event) {
                 if (event.which == '13') {

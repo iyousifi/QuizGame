@@ -2,15 +2,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QuizGameBlazor;
 
 namespace QuizGameBlazor.Migrations
 {
     [DbContext(typeof(QuizGameContext))]
-    partial class QuizGameContextModelSnapshot : ModelSnapshot
+    [Migration("20200911214451_QuestionTags")]
+    partial class QuestionTags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -118,13 +120,13 @@ namespace QuizGameBlazor.Migrations
 
             modelBuilder.Entity("QuizGameBlazor.Models.AnswerOption", b =>
                 {
-                    b.HasOne("QuizGameBlazor.Models.Answer", "Answer")
+                    b.HasOne("QuizGameBlazor.Models.Question", "Question")
                         .WithMany("AnswerOptions")
                         .HasForeignKey("AnswerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("QuizGameBlazor.Models.Question", "Question")
+                    b.HasOne("QuizGameBlazor.Models.Answer", "Answer")
                         .WithMany("AnswerOptions")
                         .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -148,13 +150,13 @@ namespace QuizGameBlazor.Migrations
 
             modelBuilder.Entity("QuizGameBlazor.Models.QuestionTags", b =>
                 {
-                    b.HasOne("QuizGameBlazor.Models.Question", "Question")
+                    b.HasOne("QuizGameBlazor.Models.Tag", "Tag")
                         .WithMany("QuestionTags")
                         .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("QuizGameBlazor.Models.Tag", "Tag")
+                    b.HasOne("QuizGameBlazor.Models.Question", "Question")
                         .WithMany("QuestionTags")
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)

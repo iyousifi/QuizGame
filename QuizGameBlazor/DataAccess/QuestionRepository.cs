@@ -22,6 +22,7 @@ namespace QuizGameBlazor.DataAccess
 
             context.Answers.AttachRange(question.AnswerOptions.Select(x => x.Answer));
             context.AnswerOptions.AttachRange(question.AnswerOptions);
+            context.QuestionTags.AttachRange(question.QuestionTags);
             //foreach (var ao in question.AnswerOptions)
             //{
             //    context.Entry(ao.Answer.Tags).State = EntityState.Detached;
@@ -53,7 +54,10 @@ namespace QuizGameBlazor.DataAccess
         public async Task<List<Question>> GetQuestions()
         {
             await using var context = _factory.CreateDbContext();
-            return await context.Questions.Include(a => a.AnswerOptions)
+            return await context.Questions
+                .Include(t => t.QuestionTags)
+                .ThenInclude(t => t.Tag)
+                .Include(a => a.AnswerOptions)
                 .ThenInclude(a => a.Answer)
                 .ToListAsync<Question>();
         }
@@ -62,6 +66,10 @@ namespace QuizGameBlazor.DataAccess
         {
             await using var context = _factory.CreateDbContext();
             context.Entry(question).State = EntityState.Modified;
+            context.Answers.AttachRange(question.AnswerOptions.Select(x => x.Answer));
+            context.AnswerOptions.AttachRange(question.AnswerOptions);
+            context.QuestionTags.AttachRange(question.QuestionTags);
+
             await context.SaveChangesAsync();
             return question;
         }

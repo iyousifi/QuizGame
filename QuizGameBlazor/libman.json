@@ -10,6 +10,10 @@
       "provider": "jsdelivr",
       "library": "bootstrap@4.5.2",
       "destination": "wwwroot/lib/bootstrap/"
+    },
+    {
+      "library": "bootstrap-tagsinput@0.8.0",
+      "destination": "wwwroot/lib/bootstrap-tagsinput/"
     }
-]
+  ]
 }
