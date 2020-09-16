@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using QuizGameBlazor.Models;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace QuizGameBlazor.DataAccess
@@ -13,10 +14,11 @@ namespace QuizGameBlazor.DataAccess
         {
             _factory = factory;
         }
-        public async Task<List<Tag>> GetTagsAsync()
+        public async Task<List<Tag>> GetTagsAsync(TagType type)
         {
             await using var context = _factory.CreateDbContext();
             var result = await context.Tags
+                .Where(x => x.Type.Equals(type))
                 .ToListAsync();
 
             return result;

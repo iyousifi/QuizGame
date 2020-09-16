@@ -97,7 +97,7 @@
     private List<string> CategoryTags;
     private HashSet<string> _initialCategories;
     private List<Answer> AnswerCache;
-    private List<Models.Answer> Answers;
+    private List<Answer> Answers;
     private Answer _selectedAnswer;
     public Answer SelectedAnswer
     {
@@ -112,7 +112,7 @@
     protected override async Task OnInitializedAsync()
     {
         Tags = new List<Tag>();
-        Tags = await tagsRepository.GetTagsAsync();
+        Tags = await tagsRepository.GetTagsAsync(TagType.Answer);
         SelectedTags = new List<int>();
         CategoryTags = new List<string>();
     }
@@ -159,14 +159,14 @@
 
 
                 var answerTags = new List<AnswerTags>();
-                var existingTags = await tagsRepository.GetTagsAsync();
+                var existingTags = await tagsRepository.GetTagsAsync(TagType.Category);
                 if (tags.Any())
                 {
                     tags.ToList().ForEach(async t =>
                     {
                         var currentTag = existingTags.FirstOrDefault(tag => tag.Text.ToLower().Equals(t.Value.Substring(1)));
                         if (currentTag == null)
-                            currentTag = await tagsRepository.AddTagAsync(new Tag { Text = t.Value.Substring(1) });
+                            currentTag = await tagsRepository.AddTagAsync(new Tag { Text = t.Value.Substring(1), Type = TagType.Answer});
 
                         answerTags.Add(new AnswerTags { Tag = currentTag });
                     });
@@ -217,13 +217,18 @@
     private async void HandleValidSubmit()
     {
         CategoryTags = await jsRuntime.InvokeAsync<List<string>>("GetCategoryValue");
-        if (CategoryTags.Any() && !_initialCategories.SequenceEqual(CategoryTags))
+        if ((CategoryTags.Any() && !_initialCategories.SequenceEqual(CategoryTags)))
         {
+
             foreach (var ct in CategoryTags)
             {
-                var tag = await tagsRepository.AddTagAsync(new Tag() { Text = ct });
+                var tag = await tagsRepository.AddTagAsync(new Tag() { Text = ct, Type = TagType.Category});
                 QuestionObject.QuestionTags.Add(new QuestionTags { Tag = tag, TagId = tag.Id });
             }
+        }
+        else
+        {
+            QuestionObject.QuestionTags = new List<QuestionTags>();
         }
 
         if (QuestionObject.Id == 0)

@@ -8,7 +8,7 @@ namespace QuizGameBlazor.DataAccess
 {
     interface ITagsRepository
     {
-        Task<List<Tag>> GetTagsAsync();
+        Task<List<Tag>> GetTagsAsync(TagType type);
         Task<Tag> AddTagAsync(Tag tag);
     }
 }
