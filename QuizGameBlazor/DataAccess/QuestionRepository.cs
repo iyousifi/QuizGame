@@ -3,7 +3,6 @@ using QuizGameBlazor.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SQLitePCL;
 
 namespace QuizGameBlazor.DataAccess
 {

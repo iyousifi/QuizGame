@@ -16,6 +16,8 @@ namespace QuizGameBlazor.Models
         public int Id { get; set; }
         [Required, StringLength(120)]
         public string Text { get; set; }
+
+        public string FollowUp { get; set; }
         [Required]
         [MinLength(2), MaxLength(5)]
         public List<AnswerOption> AnswerOptions { get; set; }
