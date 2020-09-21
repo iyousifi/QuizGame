@@ -14,5 +14,6 @@ namespace QuizGameBlazor.DataAccess
         Task Add(Question question);
         Task<Question> Update(Question question);
         Task Delete(int Id);
+        Task UpdateQuestionTags(List<QuestionTags> toAdd, List<QuestionTags> toRemove);
     }
 }

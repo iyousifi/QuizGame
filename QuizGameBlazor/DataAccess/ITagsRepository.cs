@@ -10,5 +10,6 @@ namespace QuizGameBlazor.DataAccess
     {
         Task<List<Tag>> GetTagsAsync(TagType type);
         Task<Tag> AddTagAsync(Tag tag);
+        Task RemoveTag(Tag tag);
     }
 }

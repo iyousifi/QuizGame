@@ -34,5 +34,12 @@ namespace QuizGameBlazor.DataAccess
             await context.SaveChangesAsync();
             return tag;
         }
+
+        public async Task RemoveTag(Tag tag)
+        {
+            await using var context = _factory.CreateDbContext();
+            context.Tags.Remove(tag);
+            await context.SaveChangesAsync();
+        }
     }
 }

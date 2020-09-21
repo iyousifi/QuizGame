@@ -22,10 +22,6 @@ namespace QuizGameBlazor.DataAccess
             context.Answers.AttachRange(question.AnswerOptions.Select(x => x.Answer));
             context.AnswerOptions.AttachRange(question.AnswerOptions);
             context.QuestionTags.AttachRange(question.QuestionTags);
-            //foreach (var ao in question.AnswerOptions)
-            //{
-            //    context.Entry(ao.Answer.Tags).State = EntityState.Detached;
-            //}
             await context.Questions.AddAsync(question);
             await context.SaveChangesAsync();
         }
@@ -36,6 +32,18 @@ namespace QuizGameBlazor.DataAccess
             var question = await context.Questions.FindAsync(id);
             context.Questions.Remove(question);
             await context.SaveChangesAsync();
+        }
+
+        public async Task UpdateQuestionTags(List<QuestionTags> toAdd, List<QuestionTags> toRemove)
+        {
+            await using var addcontext = _factory.CreateDbContext();
+            await addcontext.AddRangeAsync(toAdd);
+            await addcontext.SaveChangesAsync();
+
+            await using var removecontext = _factory.CreateDbContext();
+            removecontext.QuestionTags.RemoveRange(toRemove);
+            await removecontext.SaveChangesAsync();
+
         }
 
         public async Task<Question> Get(int id)
@@ -67,7 +75,7 @@ namespace QuizGameBlazor.DataAccess
             context.Entry(question).State = EntityState.Modified;
             context.Answers.AttachRange(question.AnswerOptions.Select(x => x.Answer));
             context.AnswerOptions.AttachRange(question.AnswerOptions);
-            context.QuestionTags.AttachRange(question.QuestionTags);
+            //context.QuestionTags.AttachRange(question.QuestionTags);
 
             await context.SaveChangesAsync();
             return question;

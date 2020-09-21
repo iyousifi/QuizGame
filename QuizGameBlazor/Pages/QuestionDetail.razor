@@ -100,7 +100,7 @@
     private Answer answerObject;
     private List<int> SelectedTags;
     private List<string> CategoryTags;
-    private HashSet<string> _initialCategories;
+    private HashSet<Tag> _initialCategories;
     private List<Answer> AnswerCache;
     private List<Answer> Answers;
     private Answer _selectedAnswer;
@@ -122,6 +122,22 @@
         CategoryTags = new List<string>();
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (QuestionObject.AnswerOptions.Any())
+            _correctAnswerId = QuestionObject.AnswerOptions.FirstOrDefault(x => x.IsCorrect).Answer.Id;
+
+        _initialCategories = new HashSet<Tag>();
+        if (QuestionObject.QuestionTags.Any())
+        {
+            _initialCategories = new HashSet<Tag>(QuestionObject.QuestionTags.Select(x => x.Tag));
+            categoryString = string.Join(",", QuestionObject.QuestionTags.Select(x => x.Tag.Text));
+        }
+        else
+        {
+            categoryString = string.Empty;
+        }
+    }
 
     private async Task ToggleTag(int id)
     {
@@ -171,7 +187,7 @@
                     {
                         var currentTag = existingTags.FirstOrDefault(tag => tag.Text.ToLower().Equals(t.Value.Substring(1)));
                         if (currentTag == null)
-                            currentTag = await tagsRepository.AddTagAsync(new Tag { Text = t.Value.Substring(1), Type = TagType.Answer});
+                            currentTag = await tagsRepository.AddTagAsync(new Tag { Text = t.Value.Substring(1), Type = TagType.Answer });
 
                         answerTags.Add(new AnswerTags { Tag = currentTag });
                     });
@@ -195,24 +211,6 @@
         _correctAnswerId = value;
     }
 
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (QuestionObject.AnswerOptions.Any())
-            _correctAnswerId = QuestionObject.AnswerOptions.FirstOrDefault(x => x.IsCorrect).Answer.Id;
-
-        _initialCategories = new HashSet<string>();
-        if (QuestionObject.QuestionTags.Any())
-        {
-            _initialCategories = new HashSet<string>(QuestionObject.QuestionTags.Select(x => x.Tag.Text));
-            categoryString = string.Join(",", QuestionObject.QuestionTags.Select(x => x.Tag.Text));
-        }
-        else
-        {
-            categoryString = string.Empty;
-        }
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await jsRuntime.InvokeAsync<object>("InitTagsInput");
@@ -222,26 +220,47 @@
     private async void HandleValidSubmit()
     {
         CategoryTags = await jsRuntime.InvokeAsync<List<string>>("GetCategoryValue");
-        if ((CategoryTags.Any() && !_initialCategories.SequenceEqual(CategoryTags)))
-        {
-
-            foreach (var ct in CategoryTags)
-            {
-                var tag = await tagsRepository.AddTagAsync(new Tag() { Text = ct, Type = TagType.Category});
-                QuestionObject.QuestionTags.Add(new QuestionTags { Tag = tag, TagId = tag.Id });
-            }
-        }
-        else
-        {
-            QuestionObject.QuestionTags = new List<QuestionTags>();
-        }
 
         if (QuestionObject.Id == 0)
         {
+            foreach (var ct in CategoryTags)
+            {
+                var tag = await tagsRepository.AddTagAsync(new Tag() { Text = ct, Type = TagType.Category });
+                QuestionObject.QuestionTags.Add(new QuestionTags { Tag = tag, TagId = tag.Id });
+            }
+
             await questionRepository.Add(QuestionObject);
         }
         else
         {
+            if (!_initialCategories.Select(t => t.Text).SequenceEqual(CategoryTags))
+            {
+                var toAdd = new List<QuestionTags>();
+                var toRemove = new List<QuestionTags>();
+                foreach (var ct in CategoryTags)
+                {
+                    var tag = await tagsRepository.AddTagAsync(new Tag() { Text = ct, Type = TagType.Category });
+                    if (QuestionObject.QuestionTags.Any(x => x.TagId.Equals(tag.Id)))
+                    {
+                        _initialCategories.RemoveWhere(x => x.Text.Equals(ct));
+                        continue;
+                    }
+                    toAdd.Add(new QuestionTags { TagId = tag.Id, QuestionId = QuestionObject.Id });
+                    _initialCategories.RemoveWhere(x => x.Text.Equals(ct));
+
+                }
+                if (_initialCategories.Any())
+                {
+                    foreach (var killTag in _initialCategories)
+                    {
+                        toRemove.Add(new QuestionTags { TagId = killTag.Id, QuestionId = QuestionObject.Id });
+                    }
+                }
+                await questionRepository.UpdateQuestionTags(toAdd, new List<QuestionTags>());
+                await questionRepository.UpdateQuestionTags(new List<QuestionTags>(), toRemove);
+
+            }
+
             await questionRepository.Update(QuestionObject);
         }
         await CloseTaskModal();
