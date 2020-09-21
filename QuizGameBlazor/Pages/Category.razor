@@ -1,0 +1,64 @@
+﻿@page "/Category"
+@using QuizGameBlazor.Models;
+@inject ICategoryRepository _categoryRepository;
+<h3>Categories</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Text</th>
+            <th>Tags</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var category in categories)
+        {
+            <tr>
+                <td>@category.Name</td>
+                <td>@category.Description</td>
+                <td><input type="button" class="btn btn-primary" @onclick="(() => PrepareForEdit(category))" data-toggle="modal" data-target="#categoryModal" value="Edit" /></td>
+            </tr>
+        }
+
+    </tbody>
+</table>
+<div>
+    <input type="button" data-toggle="modal" data-target="#categoryModal" class="btn btn-primary" value="Add Category" @onclick="(() => InitializeCategoryObject())" />
+</div>
+<CategoryDetail CategoryObject="@categoryObject" DataChanged="@DataChanged">
+
+
+</CategoryDetail>
+
+@code {
+    List<Models.Category> categories = new List<Models.Category>();
+    Models.Category categoryObject;
+    string customHeader = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categoryObject = new Models.Category();
+        categories = await _categoryRepository.GetAsync();
+    }
+
+    private void InitializeCategoryObject()
+    {
+        categoryObject = new Models.Category();
+        customHeader = "Add Category";
+    }
+
+    private void PrepareForEdit(Models.Category category)
+    {
+        customHeader = "Edit Category";
+        categoryObject = category;
+    }
+
+    private async void DataChanged()
+    {
+        categories = await _categoryRepository.GetAsync();
+        StateHasChanged();
+    }
+
+}

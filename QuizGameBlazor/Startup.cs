@@ -45,6 +45,7 @@ namespace QuizGameBlazor
             services.AddTransient<IQuestionRepository, QuestionRepository>();
             services.AddTransient<IAnswerRepository, AnswerRepository>();
             services.AddTransient<ITagsRepository, TagRepository>();
+            services.AddTransient<ICategoryRepository, CategoryRepository>();
             services.AddDbContextFactory<QuizGameContext>(x =>
                 x.UseSqlServer(Configuration["QuizGameBlazor:ConnectionString"]));
             services.AddDbContext<QuizGameContext>(x =>
