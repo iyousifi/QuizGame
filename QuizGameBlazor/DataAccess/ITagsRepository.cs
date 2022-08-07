@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace QuizGameBlazor.DataAccess
 {
-    interface ITagsRepository
+    public interface ITagsRepository
     {
         Task<List<Tag>> GetTagsAsync(TagType type);
         Task<Tag> AddTagAsync(Tag tag);

@@ -1,8 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using QuizGameBlazor.DataAccess;
+using QuizGameBlazor.Models;
 using QuizGameBlazor.Models.Api;
+using Question = QuizGameBlazor.Models.Api.Question;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -13,10 +16,12 @@ namespace QuizGameBlazor.Controllers
     public class GameController : ControllerBase
     {
         private readonly IQuestionRepository _questionRepository;
+        private readonly ITagsRepository _tagsRepository;
 
-        public GameController(IQuestionRepository questionRepository)
+        public GameController(IQuestionRepository questionRepository, ITagsRepository tagsRepository)
         {
             _questionRepository = questionRepository;
+            _tagsRepository = tagsRepository;
         }
         // GET: api/<GameController>
         [HttpGet]
@@ -33,5 +38,13 @@ namespace QuizGameBlazor.Controllers
                 }).ToList()
             };
         }
+
+        [HttpGet("/api/categoryTags")]
+        public async Task<List<Tag>> CategoryTags()
+        {
+            var tags = await _tagsRepository.GetTagsAsync(TagType.Category);
+            return tags;
+        }
+
     }
 }

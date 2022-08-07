@@ -32,7 +32,7 @@
                     </div>
                     <div class="form-group">
                         <label for="categories">Categories</label>
-                        <input type="text" value="@categoryString" class="form-control" data-role="tagsinput" />
+                        <input type="text" value="@categoryString" class="typehead form-control" data-role="tagsinput" />
                     </div>
                     <div class="form-group">
                         <RadioGroup TValue="int" Name="answerOptions" Buttons="true" CheckedValue="@_correctAnswerId" CheckedValueChanged="@SetCorrectAnswer">
@@ -214,6 +214,7 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await jsRuntime.InvokeAsync<object>("InitTagsInput");
+        await jsRuntime.InvokeVoidAsync("PopulateCategories", (await tagsRepository.GetTagsAsync(TagType.Category)).Select(x => x.Text));
     }
 
 

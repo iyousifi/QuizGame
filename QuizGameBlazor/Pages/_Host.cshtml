@@ -18,7 +18,7 @@
     <link href="_content/Blazored.Typeahead/blazored-typeahead.css" rel="stylesheet" />
     <link href="_content/Blazorise/blazorise.css" rel="stylesheet" />
     <link href="_content/Blazorise.Bootstrap/blazorise.bootstrap.css" rel="stylesheet" />
-    <link rel="stylesheet" href="lib/tagsinput/tagsinput.css"/>
+    <link rel="stylesheet" href="lib/tagsinput/tagsinput.css" />
 
 </head>
 <body>
@@ -44,25 +44,68 @@
     <script src="_content/Blazorise/blazorise.js"></script>
     <script src="_content/Blazorise.Bootstrap/blazorise.bootstrap.js"></script>
     <script src="~/lib/tagsinput/tagsinput.js"></script>
+    <script src="~/lib/typeahead.js/typeahead.jquery.js"></script>
     <script>
         function ShowModal(modalId) {
             $('#' + modalId).modal('show');
         }
+
         function CloseModal(modalId) {
             $('#' + modalId).modal('hide');
         }
+
         function InitTagsInput() {
             $('input[data-role=tagsinput]').tagsinput();
         };
+
         function GetCategoryValue() {
             return $('input[data-role=tagsinput]').tagsinput('items');
         };
+
         $(document).keypress(
             function (event) {
                 if (event.which == '13') {
                     event.preventDefault();
                 }
             });
+
+        function PopulateCategories(cats) {
+            categories = cats;
+        }
+
+        var categories = [];
+
+        var substringMatcher = function (strs) {
+            return function findMatches(q, cb) {
+                var matches, substringRegex;
+
+                // an array that will be populated with substring matches
+                matches = [];
+
+                // regex used to determine if a string contains the substring `q`
+                substrRegex = new RegExp(q, 'i');
+
+                // iterate through the pool of strings and for any string that
+                // contains the substring `q`, add it to the `matches` array
+                $.each(strs,
+                    function (i, str) {
+                        if (substrRegex.test(str)) {
+                            matches.push(str);
+                        }
+                    });
+
+                cb(matches);
+            };
+        };
+        $('.typeahead').typeahead({
+            hint: true,
+            highlight: true,
+            minLength: 1
+
+        }, {
+            name: 'categories',
+            source: substringMatcher(categories)
+        });
     </script>
 </body>
 </html>
